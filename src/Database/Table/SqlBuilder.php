@@ -134,6 +134,29 @@ class SqlBuilder extends Nette\Object
 		return "DELETE FROM {$this->delimitedTable}" . $this->tryDelimite($this->buildConditions());
 	}
 
+	/**
+	 * Returns hashed SQL without parameters
+	 * @return string
+	 */
+	public function getSelectQueryHash($columns = NULL) {
+		$parts = [
+			'delimitedTable' => $this->delimitedTable,
+			'queryCondition' => $this->buildConditions(),
+			'queryEnd' => $this->buildQueryEnd(),
+			$this->aliases,
+			$this->limit, $this->offset,
+		];
+		if($this->select) {
+			$parts[] = $this->select;
+		} elseif ($columns) {
+			$parts[] = [$this->delimitedTable, $columns];
+		} elseif ($this->group && !$this->driver->isSupported(ISupplementalDriver::SUPPORT_SELECT_UNGROUPED_COLUMNS)) {
+			$parts[] = [$this->group];
+		} else {
+			$parts[] = "{$this->delimitedTable}.*";
+		}
+		return md5(json_encode($parts));
+	}
 
 	/**
 	 * Returns SQL query.
