@@ -155,7 +155,14 @@ class SqlBuilder extends Nette\Object
 		} else {
 			$parts[] = "{$this->delimitedTable}.*";
 		}
-		return md5(json_encode($parts));
+		return $this->getConditionHash(json_encode($parts), array_merge(
+			$this->parameters['select'],
+			$this->parameters['joinCondition'] ? call_user_func_array('array_merge', $this->parameters['joinCondition']) : [],
+			$this->parameters['where'],
+			$this->parameters['group'],
+			$this->parameters['having'],
+			$this->parameters['order']
+		));
 	}
 
 	/**
@@ -171,7 +178,7 @@ class SqlBuilder extends Nette\Object
 				(array) $this->conventions->getPrimary($this->tableName)
 			);
 		}
-
+		$this->parameters['joinConditionSorted'] = [];
 		$queryJoinConditions = $this->buildJoinConditions();
 		$queryCondition = $this->buildConditions();
 		$queryEnd = $this->buildQueryEnd();
@@ -213,9 +220,12 @@ class SqlBuilder extends Nette\Object
 
 	public function getParameters()
 	{
+		if(!isset($this->parameters['joinConditionSorted'])) {
+			$this->buildSelectQuery();
+		}
 		return array_merge(
 			$this->parameters['select'],
-			$this->parameters['joinCondition'] ? call_user_func_array('array_merge', $this->parameters['joinCondition']) : [],
+			$this->parameters['joinConditionSorted'] ? call_user_func_array('array_merge', $this->parameters['joinConditionSorted']) : [],
 			$this->parameters['where'],
 			$this->parameters['group'],
 			$this->parameters['having'],
@@ -262,6 +272,7 @@ class SqlBuilder extends Nette\Object
 	{
 		if(!isset($this->joinCondition[$tableChain])) {
 			$this->joinCondition[$tableChain] = $this->parameters['joinCondition'][$tableChain] = [];
+			$this->parameters['joinConditionSorted'] = NULL;
 		}
 		return $this->addCondition($condition, $params, $this->joinCondition[$tableChain], $this->parameters['joinCondition'][$tableChain]);
 	}
@@ -495,7 +506,7 @@ class SqlBuilder extends Nette\Object
 		$tableJoins = $leftJoinDependency = $finalJoinConditions = [];
 		foreach ($joinConditions as $tableChain => & $joinCondition) {
 			$fooQuery = $tableChain . '.foo';
-			$this->parseJoins($joins, $fooQuery);
+			$this->parseJoins($tableJoins[$tableChain], $fooQuery);
 			$tableAlias = substr($fooQuery, 0, -4);
 			$leftJoinDependency[$tableChain] = [];
 			$finalJoinConditions[$tableAlias] = preg_replace_callback($this->getColumnChainsRegxp(), function ($match) use ($tableAlias, $joinCondition, & $tableJoins, & $leftJoinDependency) {
@@ -508,31 +519,40 @@ class SqlBuilder extends Nette\Object
 						if (isset($leftJoinDependency[$requiredTable][$tableAlias]) || isset($requredJoins[$tableAlias])) {
 							throw new Nette\InvalidArgumentException("Circular reference detected at left join conditions (tables '{$tableAlias}' and '{$queryParts[0]}').");
 						}
-						$leftJoinDependency[$tableAlias][$requiredTable] = $requiredTable;
+						$leftJoinDependency[$tableAlias][$match['chain']] = $requiredTable;
 					}
 				}
 				return $query;
 			}, $joinCondition);
+			$leftJoinDependency[$tableAlias][$tableChain] = $tableAlias;
 		}
-		while(reset($tableJoins)) {
-			$joins = $this->getSortedJoins(key($tableJoins), $leftJoinDependency, $tableJoins) + $joins;
+		if(count($joinConditions)) {
+			while(reset($tableJoins)) {
+				list($newJoins, $newParameters) = $this->getSortedJoins(key($tableJoins), $leftJoinDependency, $tableJoins);
+				$joins = $newJoins + $joins;
+				$this->parameters['joinConditionSorted'] = $newParameters + $this->parameters['joinConditionSorted'];
+			}
 		}
 		return $finalJoinConditions;
 	}
 
 
 	protected function getSortedJoins($table, &$leftJoinDependency, &$tableJoins) {
-		$joins = [];
+		$joins = $parameters = [];
 		if(isset($tableJoins[$table])) {
 			$joins = $tableJoins[$table];
 			unset($tableJoins[$table]);
 			if(isset($leftJoinDependency[$table])) {
-				foreach ($leftJoinDependency[$table] as $requiredTable) {
-					$joins = $this->getSortedJoins($requiredTable, $leftJoinDependency, $tableJoins) + $joins;
+				foreach ($leftJoinDependency[$table] as $requiredTableChain => $requiredTable) {
+					list($requiredJoins, $requiredParameters) = $this->getSortedJoins($requiredTable, $leftJoinDependency, $tableJoins);
+					$parameters = $requiredParameters + (isset($this->parameters['joinCondition'][$requiredTableChain])
+							? [$requiredTableChain => $this->parameters['joinCondition'][$requiredTableChain]]
+							: []) + $parameters;
+					$joins = $requiredJoins + $joins;
 				}
 			}
 		}
-		return $joins;
+		return [$joins, $parameters];
 	}
 
 

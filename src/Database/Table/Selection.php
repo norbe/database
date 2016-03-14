@@ -678,7 +678,7 @@ class Selection extends Nette\Object implements \Iterator, IRowContainer, \Array
 			return $this->specificCacheKey;
 		}
 
-		return $this->specificCacheKey = md5($this->sqlBuilder->getSelectQueryHash($this->getPreviousAccessedColumns()) . json_encode($this->sqlBuilder->getParameters()));
+		return $this->specificCacheKey = $this->sqlBuilder->getSelectQueryHash($this->getPreviousAccessedColumns());
 	}
 
 
