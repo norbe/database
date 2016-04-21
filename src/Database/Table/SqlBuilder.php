@@ -241,6 +241,7 @@ class SqlBuilder extends Nette\Object
 		$this->parameters['where'] = $builder->parameters['where'];
 		$this->parameters['joinCondition'] = $builder->parameters['joinCondition'];
 		$this->conditions = $builder->conditions;
+		$this->aliases = $builder->aliases;
 	}
 
 
