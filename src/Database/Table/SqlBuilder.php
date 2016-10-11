@@ -559,6 +559,9 @@ class SqlBuilder extends Nette\Object
 
 	protected function parseJoins(& $joins, & $query)
 	{
+		if(is_null($joins)) {
+			$joins = [];
+		}
 		$query = preg_replace_callback($this->getColumnChainsRegxp(), function ($match) use (& $joins) {
 			return $this->parseJoinsCb($joins, $match);
 		}, $query);
@@ -628,6 +631,10 @@ class SqlBuilder extends Nette\Object
 					$query = $this->aliases[$keyMatch['key']] . '.foo';
 					$this->parseJoins($requiredJoins, $query);
 					$aliasJoin = array_pop($requiredJoins);
+
+					if(is_null($joins)) {
+					dump(debug_backtrace());die;
+					}
 					$joins += $requiredJoins;
 					list($table, , $parentAlias, $column, $primary) = $aliasJoin;
 					$this->currentAlias = $previousAlias;
