@@ -323,9 +323,6 @@ class SqlBuilder extends Nette\Object
 					if (trim($match[2][0]) === 'NOT') {
 						$match[2][0] = rtrim($match[2][0]) . ' IN ';
 					} elseif (trim($match[2][0]) !== 'IN') {
-						\Tracy\Debugger::$maxLen = 1000;
-						dump($condition);
-						dump($match); die;
 						throw new Nette\InvalidArgumentException('Column operator does not accept array argument.');
 					}
 				} else {
@@ -345,7 +342,9 @@ class SqlBuilder extends Nette\Object
 					if ($this->driver->isSupported(ISupplementalDriver::SUPPORT_SUBSELECT)) {
 						$arg = NULL;
 						$replace = $match[2][0] . '(' . $clone->getSql() . ')';
-						array_unshift($params, ...$clone->getSqlBuilder()->getParameters());
+						if(count($clone->getSqlBuilder()->getParameters())) {
+							array_unshift($params, ...$clone->getSqlBuilder()->getParameters()); 
+						}
 					} else {
 						$arg = [];
 						foreach ($clone as $row) {
