@@ -392,7 +392,9 @@ class SqlBuilder
 					if ($this->driver->isSupported(ISupplementalDriver::SUPPORT_SUBSELECT)) {
 						$arg = null;
 						$replace = $match[2][0] . '(' . $clone->getSql() . ')';
-						array_unshift($params, ...$clone->getSqlBuilder()->getParameters());
+						if (count($clone->getSqlBuilder()->getParameters())) {
+							array_unshift($params, ...$clone->getSqlBuilder()->getParameters());
+						}
 					} else {
 						$arg = [];
 						foreach ($clone as $row) {
