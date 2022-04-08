@@ -195,8 +195,9 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 	/**
 	 * Returns row specified by primary key.
 	 * @param  mixed  $key  primary key
+	 * @return ?ActiveRow
 	 */
-	public function get($key): ?ActiveRow
+	public function get($key)
 	{
 		$clone = clone $this;
 		return $clone->wherePrimary($key)->fetch();
@@ -205,8 +206,9 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 
 	/**
 	 * Fetches single row object.
+	 * @return ?ActiveRow
 	 */
-	public function fetch(): ?ActiveRow
+	public function fetch()
 	{
 		$this->execute();
 		$return = current($this->data);
@@ -587,8 +589,10 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 		}
 	}
 
-
-	protected function createRow(array $row): ActiveRow
+	/**
+	 * @return ActiveRow
+	 */
+	protected function createRow(array $row)
 	{
 		return new ActiveRow($row, $this);
 	}
@@ -1064,8 +1068,9 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 	/**
 	 * Returns specified row.
 	 * @param  string  $key
+	 * @return ?ActiveRow
 	 */
-	public function offsetGet($key): ?ActiveRow
+	public function offsetGet($key)
 	{
 		$this->execute();
 		return $this->rows[$key];
