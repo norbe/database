@@ -177,8 +177,9 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 
 	/**
 	 * Returns row specified by primary key.
+	 * @return ?ActiveRow
 	 */
-	public function get(mixed $key): ?ActiveRow
+	public function get(mixed $key)
 	{
 		$clone = clone $this;
 		return $clone->wherePrimary($key)->fetch();
@@ -187,8 +188,9 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 
 	/**
 	 * Fetches single row object.
+	 * @return ?ActiveRow
 	 */
-	public function fetch(): ?ActiveRow
+	public function fetch()
 	{
 		$this->execute();
 		$return = current($this->data);
@@ -553,8 +555,10 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 		}
 	}
 
-
-	protected function createRow(array $row): ActiveRow
+	/**
+	 * @return ActiveRow
+	 */
+	protected function createRow(array $row)
 	{
 		return new ActiveRow($row, $this);
 	}
@@ -775,7 +779,7 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 	 * @param  array|\Traversable|Selection  $data  [$column => $value]|\Traversable|Selection for INSERT ... SELECT
 	 * @return ActiveRow|int|bool Returns ActiveRow or number of affected rows for Selection or table without primary key
 	 */
-	public function insert(iterable $data): ActiveRow|array|int|bool
+	public function insert(iterable $data)
 	{
 		//should be called before query for not to spoil PDO::lastInsertId
 		$primarySequenceName = $this->getPrimarySequence();
@@ -893,7 +897,7 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 	 * Returns referenced row.
 	 * @return ActiveRow|false|null  null if the row does not exist, false if the relationship does not exist
 	 */
-	public function getReferencedTable(ActiveRow $row, ?string $table, ?string $column = null): ActiveRow|false|null
+	public function getReferencedTable(ActiveRow $row, ?string $table, ?string $column = null)
 	{
 		if (!$column) {
 			$belongsTo = $this->conventions->getBelongsToReference($this->name, $table);
@@ -980,7 +984,10 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 	}
 
 
-	public function current(): ActiveRow|false
+	/**
+	 * @return ActiveRow|false
+	 */
+	public function current()
 	{
 		return ($key = current($this->keys)) !== false
 			? $this->data[$key]
@@ -1026,8 +1033,9 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 	/**
 	 * Returns specified row.
 	 * @param  string  $key
+	 * @return ?ActiveRow
 	 */
-	public function offsetGet($key): ?ActiveRow
+	public function offsetGet($key)
 	{
 		$this->execute();
 		return $this->rows[$key];
