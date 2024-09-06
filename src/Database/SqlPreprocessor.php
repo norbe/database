@@ -57,10 +57,10 @@ class SqlPreprocessor
 	private ?string $arrayMode;
 
 
-	public function __construct(Connection $connection)
+	public function __construct(Explorer $explorer)
 	{
-		$this->connection = $connection->getConnection();
-		$this->engine = $connection->getDatabaseEngine();
+		$this->connection = $explorer->getConnection();
+		$this->engine = $explorer->getDatabaseEngine();
 	}
 
 
