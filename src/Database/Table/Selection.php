@@ -183,7 +183,7 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 
 
 	/**
-	 * Fetches next row of result.
+	 * Returns the next row or null if there are no more rows.
 	 * @return T|null
 	 */
 	public function fetch(): ?ActiveRow
@@ -215,7 +215,9 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 
 
 	/**
-	 * Fetches all rows as associative array.
+	 * Returns all rows as associative array, where first argument specifies key column and second value column.
+	 * For duplicate keys, the last value is used. When using null as key, array is indexed from zero.
+	 * Alternatively accepts callback returning value or key-value pairs.
 	 */
 	public function fetchPairs(string|int|\Closure|null $keyOrCallback = null, string|int|null $value = null): array
 	{
@@ -224,7 +226,7 @@ class Selection implements \Iterator, IRowContainer, \ArrayAccess, \Countable
 
 
 	/**
-	 * Fetches all rows.
+	 * Returns all rows.
 	 * @return T[]
 	 */
 	public function fetchAll(): array
