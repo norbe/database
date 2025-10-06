@@ -143,6 +143,9 @@ class Helpers
 					. '>&lt;' . htmlspecialchars($type, ENT_NOQUOTES, 'UTF-8') . ' resource&gt;</i> ';
 
 			} elseif (is_bool($param)) {
+				if($explorer && $explorer->getConnection()->getDriver() instanceof Drivers\PgSqlDriver) {
+					return $param ? 'true' : 'false';
+				}
 				return (string) (int) $param;
 
 			} else {
